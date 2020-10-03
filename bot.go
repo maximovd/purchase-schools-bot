@@ -30,12 +30,13 @@ func Bot() {
 		if reflect.TypeOf(update.Message.Text).Kind() == reflect.String && update.Message.Text != "" {
 
 			switch update.Message.Text {
-			case "/start":
 
+			case "/start":
 				msg := tgbotapi.NewMessage(
 					update.Message.Chat.ID,
 					"Привет, я бот для закупок, че ты хочешь...")
 				bot.Send(msg)
+
 			case "/help":
 				msg := tgbotapi.NewMessage(
 					update.Message.Chat.ID,
@@ -50,6 +51,10 @@ func Bot() {
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Print(" No .env file found!")
+	}
+
+	if err := CreateTable(); err != nil {
+		panic(err)
 	}
 }
 
