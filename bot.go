@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -28,20 +29,33 @@ func Bot() {
 		}
 
 		if reflect.TypeOf(update.Message.Text).Kind() == reflect.String && update.Message.Text != "" {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
 
-			switch update.Message.Text {
+			switch update.Message.Command() {
 
-			case "/start":
-				msg := tgbotapi.NewMessage(
-					update.Message.Chat.ID,
-					"Привет, я бот для закупок, че ты хочешь...")
-				bot.Send(msg)
+			case "start":
+				msg.Text = "Привет, я бот для закупок, скажи мне, чего ты хочешь ?"
 
-			case "/help":
-				msg := tgbotapi.NewMessage(
-					update.Message.Chat.ID,
-					"Это помощь!")
-				bot.Send(msg)
+			case "help":
+				msg.Text = "Тут будет помощь..."
+
+			case "category":
+				categories, err := GetAllCategory()
+				if err != nil {
+					log.Panic(err)
+					msg.Text = "Произошла ошибка, повторите позже"
+				}
+				for _, category := range categories {
+					msg.Text = fmt.Sprintln(category)
+					bot.Send(msg)
+				}
+
+			default:
+				msg.Text = "К сожалению, я не знаю такой команды"
+			}
+
+			if _, err := bot.Send(msg); err != nil {
+				log.Panic(err)
 			}
 		}
 	}
@@ -53,7 +67,7 @@ func init() {
 		log.Print(" No .env file found!")
 	}
 
-	if err := CreateTable(); err != nil {
+	if err := CreateTables(); err != nil {
 		panic(err)
 	}
 }
