@@ -56,17 +56,18 @@ func CreateTables() error {
 }
 
 // GetAllCategory from database
-func GetAllCategory() ([]string, error) {
+func GetAllCategory() ([]int, []string, error) {
 	db, err := sql.Open("postgres", dbinfo)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	defer db.Close()
 
 	var category PurchaseCategory
-	var AllCategories []string
+	var AllCategoriesName []string
+	var AllCategoriesID []int
 
 	categories, err := db.Query("SELECT * FROM purchase_categories;")
 	if err != nil {
@@ -77,7 +78,37 @@ func GetAllCategory() ([]string, error) {
 		if err := categories.Scan(&category.ID, &category.name); err != nil {
 			log.Fatal(err)
 		}
-		AllCategories = append(AllCategories, category.name)
+		AllCategoriesID = append(AllCategoriesID, category.ID)
+		AllCategoriesName = append(AllCategoriesName, category.name)
 	}
-	return AllCategories, err
+	return AllCategoriesID, AllCategoriesName, err
+}
+
+//AddCategory into database
+func AddCategory(category string) (string, error) {
+	db, err := sql.Open("postgres", dbinfo)
+
+	if err != nil {
+		return "Ошибка подключения к базе", err
+	}
+	defer db.Close()
+	query := "INSERT INTO purchase_categories(category_name) VALUES($1);"
+	if _, err = db.Exec(query, category); err != nil {
+		return "Ошибка выполнения запроса", err
+	}
+	return "Категория успешно добавлена", err
+}
+
+//DeleteCategory into database
+func DeleteCategory(categoryID string) (string, error) {
+	db, err := sql.Open("postgres", dbinfo)
+	if err != nil {
+		return "Ошибка подключения к базе", err
+	}
+	defer db.Close()
+	query := "DELETE FROM purchase_categories WHERE category_id = $1;"
+	if _, err = db.Exec(query, categoryID); err != nil {
+		return "Ошибка выполнения запроса", err
+	}
+	return "Категория успешно удалена", err
 }
