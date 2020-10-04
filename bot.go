@@ -10,6 +10,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// managmentKeyboard for control command.
+var managmentKeyboard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Все категории"),
+		tgbotapi.NewKeyboardButton("Добавить категорию"),
+		tgbotapi.NewKeyboardButton("Удалить категорию"),
+	),
+)
+
 //Bot create logic for work with telegram api.
 func Bot() {
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
@@ -34,21 +43,38 @@ func Bot() {
 			switch update.Message.Command() {
 
 			case "start":
-				msg.Text = "Привет, я бот для закупок, скажи мне, чего ты хочешь ?"
+				msg.ReplyMarkup = managmentKeyboard
 
 			case "help":
 				msg.Text = "Тут будет помощь..."
 
 			case "category":
-				categories, err := GetAllCategory()
+				categoriesID, categoriesName, err := GetAllCategory()
 				if err != nil {
 					log.Panic(err)
 					msg.Text = "Произошла ошибка, повторите позже"
 				}
-				for _, category := range categories {
-					msg.Text = fmt.Sprintln(category)
-					bot.Send(msg)
+				for i := 0; i < len(categoriesID) && i < len(categoriesName); i++ {
+					msg.Text += fmt.Sprintln(categoriesID[i], categoriesName[i])
 				}
+
+			case "add_category":
+				result, err := AddCategory(update.Message.CommandArguments())
+
+				if err != nil {
+					msg.Text = result
+					log.Panic(err)
+				}
+				msg.Text = result
+
+			case "del_category":
+				result, err := DeleteCategory(update.Message.CommandArguments())
+
+				if err != nil {
+					msg.Text = result
+					log.Panic(err)
+				}
+				msg.Text = result
 
 			default:
 				msg.Text = "К сожалению, я не знаю такой команды"
